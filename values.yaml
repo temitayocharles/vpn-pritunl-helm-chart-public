@@ -26,3 +26,9 @@ mongodb:
     - name: custom-mongo-probes
       mountPath: /opt/bitnami/scripts/mongodb/healthcheck.sh
       subPath: readiness-probe.sh
+
+service:
+  type: ClusterIP
+
+ingress:
+  enabled: false

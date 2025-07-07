@@ -1,11 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: vpn-pritunl
+  name: {{ include "vpn-pritunl.fullname" . }}
+  labels:
+    {{- include "vpn-pritunl.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.service.type }}
-  selector:
-    app: vpn-pritunl
+  type: {{ .Values.service.type | default "ClusterIP" }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: 443
+    - port: {{ .Values.service.port | default 443 }}
+      targetPort: https
+      protocol: TCP
+      name: https
+  selector:
+    {{- include "vpn-pritunl.selectorLabels" . | nindent 4 }}
