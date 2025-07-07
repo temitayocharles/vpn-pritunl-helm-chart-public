@@ -1,0 +1,49 @@
+# macOS
+.DS_Store
+
+# VSCode / JetBrains
+.vscode/
+.idea/
+
+# Helm build artifacts
+charts/
+*.tgz
+Chart.lock
+.releases/
+.release/
+
+# CI/Dev test files
+*.log
+*.bak
+*.tmp
+kind-config.yaml
+merged-*.txt
+
+# Secrets and overrides (DO NOT commit real versions)
+secrets*.yaml
+temp-secret.yaml
+*.sops.yaml
+*.tfvars
+.env
+
+# Terraform leftovers (if reused)
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Python virtualenvs (if CI scripts are Python-based)
+.venv/
+venv/
+
+# Node (if build tools are JS-based)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Coverage / test / debug
+coverage/
+*.coverprofile
+*.test
+
+# GitHub Actions run logs
+.github/workflows/*.log
