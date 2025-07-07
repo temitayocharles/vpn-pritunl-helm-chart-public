@@ -11,10 +11,10 @@ mongodb:
   image:
     tag: 4.4.6-debian-10-r13
   auth:
-    rootPassword: pritunlroot
-    username: pritunluser
-    password: UserPass123
-    database: pritunldb
+    rootPassword: your-root-password
+    username: your-db-username
+    password: your-db-password
+    database: your-db-name
 
   readinessProbe:
     enabled: true
@@ -55,12 +55,12 @@ pritunl:
     enabled: true
     client_id: "${OIDC_CLIENT_ID}"
     client_secret: "${OIDC_CLIENT_SECRET}"
-    issuer_url: "https://auth.edusuc.net"
-    redirect_uri: "https://vpn.dev.edusuc.net/auth/callback"
+    issuer_url: "https://auth.example.com"
+    redirect_uri: "https://vpn.example.com/auth/callback"
 
 ingress:
   enabled: true
   className: nginx
   clusterIssuer: letsencrypt-staging
-  host: vpn.dev.edusuc.net
-  tlsSecret: pritunl-dev-tls
+  host: vpn.example.com
+  tlsSecret: pritunl-tls

@@ -8,10 +8,10 @@ mongodb:
   image:
     tag: 4.4.6-debian-10-r13
   auth:
-    rootPassword: pritunlroot
-    username: pritunluser
-    password: UserPass123
-    database: pritunldb
+    rootPassword: your-root-password
+    username: your-db-username
+    password: your-db-password
+    database: your-db-name
 
   livenessProbe:
     enabled: true

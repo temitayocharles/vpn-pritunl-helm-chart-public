@@ -1,51 +1,46 @@
-# vpn-pritunl Helm Chart
+# 🚀 vpn-pritunl Helm Chart
 
-Helm chart for deploying [Pritunl Zero](https://github.com/pritunl/pritunl-zero) with optional MongoDB and OIDC authentication. Designed for secure, scalable VPN infrastructure with TLS, ingress, and GitHub Actions CI compatibility.
+![CI](https://github.com/temitayocharles/vpn-pritunl-helm-chart-public/actions/workflows/helm-ci.yml/badge.svg?branch=main)
 
----
 
-## 🚀 Features
-
-- **Pritunl VPN** deployed to Kubernetes via Helm
-- **MongoDB** support (Bitnami chart compatible)
-- **OIDC authentication** integration (e.g., Keycloak, Auth0)
-- **NGINX ingress** with optional TLS (cert-manager support)
-- **Custom health probes** via ConfigMap override
-- **Dry-run and CI testing** with `dev-values.yaml`
-- Follows [Helm best practices](https://helm.sh/docs/chart_best_practices/)
+Secure, production-ready Helm chart to deploy [Pritunl Zero](https://github.com/pritunl/pritunl-zero) with optional MongoDB and OIDC integration. Built for Kubernetes clusters using Ingress, TLS, and GitHub Actions.
 
 ---
 
-## 📦 Chart Structure
+## 📦 Overview
 
-```
+This Helm chart bootstraps a complete Pritunl Zero stack:
+
+- 🌐 NGINX Ingress with TLS (cert-manager)
+- 🔐 OIDC SSO login support (Keycloak, Auth0)
+- 💾 Embedded MongoDB (Bitnami compatible)
+- ⚙️ Configurable health checks and probes
+- ✅ GitHub Actions CI: lint + dry-run validated
+
+---
+
+## 📁 Chart Structure
+
+```text
 vpn-pritunl-helm-chart/
-├── charts/                  # Helm dependencies (e.g. MongoDB tgz)
-├── templates/               # Kubernetes manifests
-│   ├── _helpers.tpl         # Label helpers
-│   ├── deployment.yaml      # Pritunl deployment
-│   ├── service.yaml         # Kubernetes Service
-│   ├── ingress.yaml         # NGINX ingress
-│   ├── certificate.yaml     # TLS via cert-manager
-│   └── override-mongo-probes.yaml # ConfigMap for MongoDB probe override
-├── dev-values.yaml          # Development override values
-├── values.yaml              # Default production-safe values
-├── Chart.yaml               # Chart metadata
-└── README.md                # Documentation (you are here)
+├── charts/
+├── templates/
+│   ├── _helpers.tpl
+│   ├── deployment.yaml
+│   ├── ingress.yaml
+│   ├── certificate.yaml
+│   ├── override-mongo-probes.yaml
+│   └── service.yaml
+├── dev-values.yaml
+├── values.yaml
+└── Chart.yaml
 ```
 
 ---
 
-## 🔧 Installation
+## 🔧 Quick Start
 
-### Prerequisites
-
-- Kubernetes cluster (Kind, Minikube, EKS, etc.)
-- Helm 3.x
-- cert-manager (for TLS)
-- NGINX Ingress Controller
-
-### Install the Chart
+Install into a namespace:
 
 ```bash
 helm upgrade --install vpn-pritunl ./ \
@@ -53,23 +48,23 @@ helm upgrade --install vpn-pritunl ./ \
   --namespace vpn --create-namespace
 ```
 
+> You must pre-install cert-manager and NGINX Ingress.
+
 ---
 
-## ⚙️ Configuration
+## 🧪 Values Overview
 
-### MongoDB (default enabled)
+### MongoDB
 
 ```yaml
 mongodb:
   enabled: true
   auth:
-    rootPassword: pritunlroot
-    username: pritunluser
-    password: UserPass123
-    database: pritunldb
+    rootPassword: your-root-password
+    username: your-db-username
+    password: your-db-password
+    database: your-db-name
 ```
-
----
 
 ### OIDC Authentication
 
@@ -83,7 +78,7 @@ pritunl:
     redirect_uri: https://vpn.example.com/auth/callback
 ```
 
-Create the required secret:
+Create your secret:
 
 ```yaml
 apiVersion: v1
@@ -98,7 +93,7 @@ stringData:
 
 ---
 
-## 🌐 Ingress & TLS
+## 🔐 Ingress + TLS
 
 ```yaml
 ingress:
@@ -111,59 +106,23 @@ ingress:
 
 ---
 
-## 🧪 Health Check Override (MongoDB)
-
-Customize MongoDB readiness/liveness probes:
-
-```yaml
-mongodb:
-  extraVolumes:
-    - name: custom-mongo-probes
-      configMap:
-        name: override-mongo-probes
-        defaultMode: 0555
-  extraVolumeMounts:
-    - name: custom-mongo-probes
-      mountPath: /bitnami/scripts/readiness-probe.sh
-      subPath: readiness-probe.sh
-    - name: custom-mongo-probes
-      mountPath: /bitnami/scripts/liveness-probe.sh
-      subPath: liveness-probe.sh
-```
-
----
-
-## 🧪 Dry-Run Test (CI or local)
-
-```bash
-helm template vpn-pritunl . -f dev-values.yaml
-```
-
-Or lint it:
+## 🧪 CI Commands
 
 ```bash
 helm lint .
+helm template vpn-pritunl . -f dev-values.yaml
 ```
-
----
-
-## 🧪 CI Compatibility
-
-- `dev-values.yaml` supports dry-run pipeline testing
-- GitHub Actions sample included (`.github/workflows/helm-ci.yml`)
-- Lint + template rendering check with Helm 3.x
-
----
-
-## 🧠 Author
-
-**Temitayo Charles Akinniranye**  
-DevOps Engineer | Kubernetes | Terraform | CI/CD  
-[GitHub @temitayocharles](https://github.com/temitayocharles)  
-[meetcharlie.live](https://www.meetcharlie.live)
 
 ---
 
 ## 📄 License
 
-MIT
+MIT — free to use, contribute, and adapt.
+
+---
+
+## 🧠 Maintainer
+
+**Temitayo Charles Akinniranye**  
+DevOps Engineer  
+[GitHub](https://github.com/temitayocharles) • [Portfolio](https://www.meetcharlie.live)

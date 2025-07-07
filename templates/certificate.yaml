@@ -4,9 +4,9 @@ metadata:
   name: pritunl-cert
   namespace: vpn
 spec:
-  secretName: pritunl-dev-tls
+  secretName: pritunl-tls
   issuerRef:
     name: letsencrypt-dev
     kind: ClusterIssuer
   dnsNames:
-    - vpn.dev.edusuc.net
+    - vpn.example.com
