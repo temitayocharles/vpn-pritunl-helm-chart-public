@@ -1,6 +1,6 @@
 # 🚀 vpn-pritunl Helm Chart
 
-![CI](https://github.com/temitayocharles/vpn-pritunl-helm-chart-public/actions/workflows/helm-ci.yml/badge.svg?branch=main)
+![Deployment Flow](docs/assets/deployment-flow-dark.png)
 
 
 Secure, production-ready Helm chart to deploy [Pritunl Zero](https://github.com/pritunl/pritunl-zero) with optional MongoDB and OIDC integration. Built for Kubernetes clusters using Ingress, TLS, and GitHub Actions.
