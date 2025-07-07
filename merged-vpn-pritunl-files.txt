@@ -1,0 +1,258 @@
+====== FILE: ./Chart.yaml ======
+apiVersion: v2
+name: vpn-pritunl
+description: A Helm chart to deploy Pritunl Zero VPN with MongoDB backend and OIDC support
+version: 1.0.0
+appVersion: "1.0.3292.11"
+dependencies:
+  - name: mongodb
+    version: 13.6.4
+    repository: https://charts.bitnami.com/bitnami
+    condition: mongodb.enabled
+
+
+====== FILE: ./ci/dev-test.sh ======
+#!/bin/bash
+set -e
+
+echo "[INFO] Running helm dependency update..."
+helm dependency update .
+
+echo "[INFO] Decrypting secrets..."
+sops -d secrets.sops.yaml > secrets.yaml
+
+echo "[INFO] Linting chart..."
+helm lint .
+
+echo "[INFO] Rendering chart (dry-run)..."
+helm template vpn-pritunl . -f values.yaml -f secrets.yaml
+
+echo "[INFO] ✅ Chart rendered successfully"
+
+# Optional cleanup
+rm -f secrets.yaml
+
+
+====== FILE: ./prod-values.yaml ======
+mongodb:
+  image:
+    tag: 4.4.6-debian-10-r18
+  initScriptsCM: override-mongo-probes
+  auth:
+    rootUser: root
+    existingSecret: vpn-pritunl-mongodb
+  extraEnvVars:
+    - name: MONGODB_EXTRA_USERNAMES
+      value: pritunluser
+    - name: MONGODB_EXTRA_DATABASES
+      value: pritunldb
+    - name: MONGODB_EXTRA_PASSWORDS
+      valueFrom:
+        secretKeyRef:
+          name: vpn-pritunl-mongodb
+          key: mongodb-passwords
+
+
+====== FILE: ./secrets.sops.yaml ======
+apiVersion: v1
+kind: Secret
+metadata:
+    name: pritunl-secret
+type: Opaque
+stringData:
+    oidc-client-id: ENC[AES256_GCM,data:ANvG4ZO4jpxCuN/kA/RHDOk=,iv:2LfVv3ehkS8qoGMzictuGJkOua4BkmNeawetimV3a0A=,tag:spuW84PxzoIvbRBl26aoYw==,type:str]
+    oidc-client-secret: ENC[AES256_GCM,data:BQn88//i7V++bvdKXTf5ii0afmsa,iv:WorbihKLO9PHH+5hVNUrWfEPan+PKnXi0MjDt/o/O+o=,tag:AqcffMYukEWJSE+RSoWhNw==,type:str]
+sops:
+    age:
+        - recipient: age100l5h2uh57fqkaw3j55zcazetc33pv0sra09elxmqmplnzt6c5esmgsthy
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA5eUhrNnBaRDJYbDZZSXVm
+            Y1hLZHlFNXVhbkdrRnNBNFZtQ2dsd1ZHUkQwCk1DM21iM3dvaStXNUxtRzVtVzNq
+            RG92Si8ybXJPTXN2dHRYL1Bqa3JZRWMKLS0tIHY0Vk9KSHIxUFdxQURiVEpYL2g4
+            U29NT3NKc1JrYk1ONDlELzRQaEloN3cKnPYVQZhETf7LSX5Bs9mYJoSGOVKUf52z
+            PyZgER2XjEZCCbKe144fF0cUrhDNt3s7VFV499dK1zsAVwICZ6tjZw==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2025-06-25T07:45:57Z"
+    mac: ENC[AES256_GCM,data:rOPi5d7H7u57jo13nXpkAx374ACq3jYRU/YNeW7cTkUHw5NCUfQU02gVKgG6IUkXsltWmy15nUgtRxszuMLej9JvrqcBbldoLBPobX4rWJ6v6ot3EVCXEtx/5peBVr+4G0KGhIeMEMerWlA1kZW+zJsPF3XOguXnmn5WMQRaVTU=,iv:EXfZfg0YzI7quZ5XQIR72UrNqzCbIFZFzcBZOfFMj8k=,tag:25Pz9hHAjD1IOrXcuPyNFQ==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.10.2
+
+
+====== FILE: ./temp-secret.yaml ======
+apiVersion: v1
+data:
+  mongodb-passwords: VXNlclBhc3MxMjM=
+  mongodb-root-password: cHJpdHVubHJvb3Q=
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: vpn-pritunl-mongodb
+  namespace: vpn
+
+
+====== FILE: ./templates/certificate.yaml ======
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: pritunl-cert
+  namespace: vpn
+spec:
+  secretName: pritunl-dev-tls
+  issuerRef:
+    name: letsencrypt-dev
+    kind: ClusterIssuer
+  dnsNames:
+    - vpn.dev.edusuc.net
+
+
+====== FILE: ./templates/deployment.yaml ======
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpn-pritunl
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vpn-pritunl
+  template:
+    metadata:
+      labels:
+        app: vpn-pritunl
+    spec:
+      containers:
+        - name: pritunl
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 443
+          env:
+            - name: MONGODB_URI
+              value: mongodb://{{ .Values.mongodb.auth.username }}:{{ .Values.mongodb.auth.password }}@vpn-pritunl-mongodb:27017/{{ .Values.mongodb.auth.database }}
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: pritunl-secret
+                  key: oidc-client-id
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: pritunl-secret
+                  key: oidc-client-secret
+            - name: OIDC_ISSUER_URL
+              value: {{ .Values.pritunl.oidc.issuer_url }}
+            - name: OIDC_REDIRECT_URI
+              value: {{ .Values.pritunl.oidc.redirect_uri }}
+
+
+====== FILE: ./templates/ingress.yaml ======
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vpn-pritunl
+  namespace: vpn
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    cert-manager.io/cluster-issuer: "letsencrypt-dev"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - vpn.dev.edusuc.net
+      secretName: pritunl-dev-tls
+  rules:
+    - host: vpn.dev.edusuc.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vpn-pritunl
+                port:
+                  number: 443
+
+
+====== FILE: ./templates/override-mongo-probes.yaml ======
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: override-mongo-probes
+  namespace: vpn
+  labels:
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: vpn-pritunl
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: vpn-pritunl
+    meta.helm.sh/release-namespace: vpn
+data:
+  readiness-probe.sh: |
+    #!/bin/bash
+    mongo --eval 'db.runCommand({ ping: 1 }).ok' --quiet | grep 1
+  liveness-probe.sh: |
+    #!/bin/bash
+    mongo --eval 'db.runCommand({ ping: 1 }).ok' --quiet | grep 1
+
+
+====== FILE: ./templates/service.yaml ======
+apiVersion: v1
+kind: Service
+metadata:
+  name: vpn-pritunl
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: vpn-pritunl
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 443
+
+
+====== FILE: ./values.yaml ======
+image:
+  repository: pritunl/pritunl-zero
+  tag: "1.0.3292.11"
+
+service:
+  type: ClusterIP
+  port: 443
+
+mongodb:
+  enabled: true
+  image:
+    tag: 4.4.6-debian-10-r13
+  auth:
+    rootPassword: pritunlroot
+    username: pritunluser
+    password: UserPass123
+    database: pritunldb
+  readinessProbe:
+    enabled: true
+    exec:
+      command:
+        - bash
+        - -c
+        - |
+          mongo --eval "db.adminCommand('ping')" --quiet | grep 1
+  livenessProbe:
+    enabled: true
+    exec:
+      command:
+        - bash
+        - -c
+        - |
+          mongo --eval "db.adminCommand('ping')" --quiet | grep 1
+
+pritunl:
+  oidc:
+    enabled: true
+    client_id: "${OIDC_CLIENT_ID}"
+    client_secret: "${OIDC_CLIENT_SECRET}"
+    issuer_url: "https://auth.edusuc.net"
+    redirect_uri: "https://vpn.dev.edusuc.net/auth/callback"
+
+

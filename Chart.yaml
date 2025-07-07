@@ -1,0 +1,10 @@
+apiVersion: v2
+name: vpn-pritunl
+description: A Helm chart to deploy Pritunl Zero VPN with MongoDB backend and OIDC support
+version: 1.0.0
+appVersion: "1.0.3292.11"
+dependencies:
+  - name: mongodb
+    version: 13.6.4
+    repository: https://charts.bitnami.com/bitnami
+    condition: mongodb.enabled

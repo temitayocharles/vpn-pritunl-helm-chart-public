@@ -1,0 +1,28 @@
+mongodb:
+  enabled: true
+  image:
+    tag: 4.4.6-debian-10-r13
+  auth:
+    rootPassword: pritunlroot
+    username: pritunluser
+    password: UserPass123
+    database: pritunldb
+
+  livenessProbe:
+    enabled: true
+    path: /opt/bitnami/scripts/mongodb/healthcheck.sh
+
+  readinessProbe:
+    enabled: true
+    path: /opt/bitnami/scripts/mongodb/healthcheck.sh
+
+  extraVolumes:
+    - name: custom-mongo-probes
+      configMap:
+        name: override-mongo-probes
+        defaultMode: 0555
+
+  extraVolumeMounts:
+    - name: custom-mongo-probes
+      mountPath: /opt/bitnami/scripts/mongodb/healthcheck.sh
+      subPath: readiness-probe.sh

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: override-mongo-probes
+  namespace: vpn
+  labels:
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: vpn-pritunl
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: vpn-pritunl
+    meta.helm.sh/release-namespace: vpn
+data:
+  readiness-probe.sh: |
+    #!/bin/bash
+    mongo --eval 'db.runCommand({ ping: 1 }).ok' --quiet | grep 1

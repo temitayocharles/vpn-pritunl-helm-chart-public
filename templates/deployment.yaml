@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpn-pritunl
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vpn-pritunl
+  template:
+    metadata:
+      labels:
+        app: vpn-pritunl
+    spec:
+      containers:
+        - name: pritunl
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 443
+          env:
+            - name: MONGODB_URI
+              value: mongodb://{{ .Values.mongodb.auth.username }}:{{ .Values.mongodb.auth.password }}@vpn-pritunl-mongodb:27017/{{ .Values.mongodb.auth.database }}
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: pritunl-secret
+                  key: oidc-client-id
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: pritunl-secret
+                  key: oidc-client-secret
+            - name: OIDC_ISSUER_URL
+              value: {{ .Values.pritunl.oidc.issuer_url }}
+            - name: OIDC_REDIRECT_URI
+              value: {{ .Values.pritunl.oidc.redirect_uri }}

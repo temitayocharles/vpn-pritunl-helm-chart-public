@@ -1,0 +1,66 @@
+image:
+  repository: pritunl/pritunl-zero
+  tag: "1.0.3292.11"
+
+service:
+  type: ClusterIP
+  port: 443
+
+mongodb:
+  enabled: true
+  image:
+    tag: 4.4.6-debian-10-r13
+  auth:
+    rootPassword: pritunlroot
+    username: pritunluser
+    password: UserPass123
+    database: pritunldb
+
+  readinessProbe:
+    enabled: true
+    exec:
+      command:
+        - bash
+        - -c
+        - |
+          /bitnami/scripts/readiness-probe.sh
+    initialDelaySeconds: 30
+
+  livenessProbe:
+    enabled: true
+    exec:
+      command:
+        - bash
+        - -c
+        - |
+          /bitnami/scripts/liveness-probe.sh
+    initialDelaySeconds: 30
+
+  extraVolumes:
+    - name: custom-mongo-probes
+      configMap:
+        name: override-mongo-probes
+        defaultMode: 0555
+
+  extraVolumeMounts:
+    - name: custom-mongo-probes
+      mountPath: /bitnami/scripts/readiness-probe.sh
+      subPath: readiness-probe.sh
+    - name: custom-mongo-probes
+      mountPath: /bitnami/scripts/liveness-probe.sh
+      subPath: liveness-probe.sh
+
+pritunl:
+  oidc:
+    enabled: true
+    client_id: "${OIDC_CLIENT_ID}"
+    client_secret: "${OIDC_CLIENT_SECRET}"
+    issuer_url: "https://auth.edusuc.net"
+    redirect_uri: "https://vpn.prod.edusuc.net/auth/callback"
+
+ingress:
+  enabled: true
+  className: nginx
+  clusterIssuer: letsencrypt-prod
+  host: vpn.prod.edusuc.net
+  tlsSecret: pritunl-prod-tls
