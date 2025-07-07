@@ -17,3 +17,17 @@
 {{- define "vpn-pritunl.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" }}
 {{- end }}
+
+{{/* Common metadata labels for Pritunl components */}}
+{{- define "vpn-pritunl.labels" -}}
+app.kubernetes.io/name: {{ include "vpn-pritunl.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/version: {{ .Chart.AppVersion }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/* Labels used for selector matching */}}
+{{- define "vpn-pritunl.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "vpn-pritunl.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

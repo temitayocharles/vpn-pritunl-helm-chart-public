@@ -2,24 +2,33 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vpn-pritunl
+  labels:
+    app.kubernetes.io/name: {{ include "vpn-pritunl.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: vpn-pritunl
+      app.kubernetes.io/name: {{ include "vpn-pritunl.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: vpn-pritunl
+        app.kubernetes.io/name: {{ include "vpn-pritunl.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       containers:
         - name: pritunl
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.image.repository | default "pritunl/pritunl-zero" }}:{{ .Values.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
           ports:
             - containerPort: 443
+              name: https
+              protocol: TCP
           env:
             - name: MONGODB_URI
               value: mongodb://{{ .Values.mongodb.auth.username }}:{{ .Values.mongodb.auth.password }}@vpn-pritunl-mongodb:27017/{{ .Values.mongodb.auth.database }}
+            {{- if .Values.pritunl.oidc.enabled }}
             - name: OIDC_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -31,6 +40,7 @@ spec:
                   name: pritunl-secret
                   key: oidc-client-secret
             - name: OIDC_ISSUER_URL
-              value: {{ .Values.pritunl.oidc.issuer_url }}
+              value: "{{ .Values.pritunl.oidc.issuer_url }}"
             - name: OIDC_REDIRECT_URI
-              value: {{ .Values.pritunl.oidc.redirect_uri }}
+              value: "{{ .Values.pritunl.oidc.redirect_uri }}"
+            {{- end }}

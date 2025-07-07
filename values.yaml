@@ -1,3 +1,8 @@
+image:
+  repository: pritunl/pritunl-zero
+  tag: "1.0.3292.11"
+  pullPolicy: IfNotPresent
+
 mongodb:
   enabled: true
   image:
@@ -32,3 +37,11 @@ service:
 
 ingress:
   enabled: false
+
+pritunl:
+  oidc:
+    enabled: false
+    client_id: ""
+    client_secret: ""
+    issuer_url: ""
+    redirect_uri: ""
